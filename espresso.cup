@@ -190,7 +190,7 @@ non terminal AST interface_type;
 non terminal AST array_type;
 
 // 19.5) Names
-non terminal AST name; 
+non terminal Name name; 
 
 // 19.6) Packages
 non terminal AST compilation_unit;
@@ -400,8 +400,8 @@ array_type ::=
 // 19.5) Names
 // -----------------------------------------------------------------------------
 
-// Type: 
-name	::=	IDENTIFIER:i
+// Type: Name :> AST
+name	::=	IDENTIFIER:i   {: RESULT = new Name(i); :}
 	;
 
 // -----------------------------------------------------------------------------
@@ -468,10 +468,10 @@ modifiers ::=
 
 // Type: Modifier :> AST
 modifier ::=
-		PUBLIC:m   
-	|	PRIVATE:m  
-	|	STATIC:m   
-	|	FINAL:m    
+		PUBLIC:m {: RESULT = new Modifier(m, Modifier.Public); :}
+	|	PRIVATE:m {: RESULT = new Modifier(m, Modifier.Private); :}
+	|	STATIC:m {: RESULT = new Modifier(m, Modifier.Static); :}
+	|	FINAL:m {: RESULT = new Modifier(m, Modifier.Final); :}
 	|	ABSTRACT:m {: RESULT = new Modifier(m, Modifier.Abstract); :} 
 	;
 
@@ -796,27 +796,27 @@ variable_initializers ::=
 // 19.11) Blocks and Statements
 // -----------------------------------------------------------------------------
 
-// Type: 
+// Type: Block :> Statement :> AST
 block ::=	
-		LBRACE block_statements_opt:l RBRACE 
+		LBRACE block_statements_opt:l RBRACE {: RESULT = new Block(l); :}
 	;
 
-// Type: 
+// Type: Sequence<Statement> :> AST :> AST
 block_statements_opt ::=
-		block_statements:l 	
-	|       /* Empty */		
+		block_statements:l {: RESULT = new Sequence(l); :}
+	|       /* Empty */ {: RESULT = new Sequence(); :}
 	;
 
-// Type:
+// Type: Sequence<Statement> :> AST :> AST
 block_statements ::=
-		block_statement:l  	
-	|	block_statements:ls block_statement:l
+		block_statement:l {: RESULT = new Sequence(l); :}
+	|	block_statements:ls block_statement:l {: RESULT = ls.append(l); :}
 	;
 
-// Type: 
+// Type: Statement :> AST
 block_statement ::=
-		local_variable_declaration:l SEMICOLON 
-	|	statement:l                            
+		local_variable_declaration:l SEMICOLON {: RESULT = l; :}  /////////NOT SURE ABOUT THIS ONE
+	|	statement:l {: RESULT = new Statement(l); :}                      
 	;
 
 // Type: Sequence(LocalDecl) :> AST
@@ -895,132 +895,132 @@ statement_expression ::=
 	|	class_instance_creation_expression:l 
 	;
 
-// Type:
+// Type: IfStat :> AST
 if_then_statement ::=
-		IF LPAREN expression:e RPAREN statement:t
+		IF LPAREN expression:e RPAREN statement:t {: RESULT = new IfStat(e,t); :}
 	;
 
-// Type: 
+// Type: IfStat :> AST
 if_then_else_statement ::=
 		IF LPAREN expression:e RPAREN statement_no_short_if:t
-		ELSE statement:ls
+		ELSE statement:ls {: RESULT = new IfStat(e, t, ls); :}
 	;
 
-// Type:
+// Type: IfStat :> AST
 if_then_else_statement_no_short_if ::=
 		IF LPAREN expression:e RPAREN statement_no_short_if:t
-		ELSE statement_no_short_if:ls
+		ELSE statement_no_short_if:ls {: RESULT = new IfStat(e, t, ls); :}
 	;
 
-// Type:
+// Type: DoStat :> AST
 do_statement ::=
-		DO statement:s WHILE LPAREN expression:e RPAREN SEMICOLON
+		DO statement:s WHILE LPAREN expression:e RPAREN SEMICOLON {: RESULT = new DoStat(s, e) :}
 	;
 
-// Type SwitchStat :> Statement :> AST
+// Type: SwitchStat :> Statement :> AST
 switch_statement ::=
 		SWITCH LPAREN expression:e RPAREN switch_block:s
 			{: RESULT = new SwitchStat(e, s); :}
 	;
 
-// Type:
+// Type: Sequence<SwitchGroup> :> AST :> AST
 switch_block ::=
-		LBRACE switch_block_statement_groups_opt:s RBRACE
+		LBRACE switch_block_statement_groups_opt:s RBRACE {: RESULT = s; :}
 	;
 
-// Type: 
+// Type: Sequence<SwitchGroup> :> AST :> AST
 switch_block_statement_groups_opt ::=
-		switch_block_statement_groups:ss  
-	|	/* Empty */			  
+		switch_block_statement_groups:ss {: RESULT = ss; :}  
+	|	/* Empty */ {: RESULT = new Sequence(); :}
 	;
 	
-// Type: 
+// Type: Sequence<SwitchGroup> :> AST :> AST
 switch_block_statement_groups ::=
-		switch_block_statement_group:s	
-	|	switch_block_statement_groups:ss switch_block_statement_group:s
+		switch_block_statement_group:s {: RESULT = new Sequence(s); :}
+	|	switch_block_statement_groups:ss switch_block_statement_group:s {: RESULT = ss.append(s); :}
 	;
 
-// Type:
+// Type: SwitchGroup :> AST
 switch_block_statement_group ::=
-		switch_labels:l block_statements:s   
+		switch_labels:l block_statements:s {: RESULT = new SwitchGroup(l, s); :}  
 	;
 
-// Type: 
+// Type: Sequence<SwitchLabel> :> AST :> AST
 switch_labels ::=
-		switch_label:s			 
-	|	switch_labels:ss  switch_label:s 
+		switch_label:s {: RESULT = new Sequence(s); :}	 
+	|	switch_labels:ss  switch_label:s {: RESULT = ss.append(s); :} 
 	;
 
-// Type: 
+// Type: SwitchLabel :> AST
 switch_label ::=
-		CASE constant_expression:e COLON   
-	|	DEFAULT COLON                      
+		CASE constant_expression:e COLON {: RESULT = new SwitchLabel(e, false); :}   
+	|	DEFAULT COLON {: RESULT = new SwitchLabel(null, true); :}                      
 	;
 
-// Type:
+// Type: WhileStat :> AST
 while_statement ::=
-		WHILE LPAREN expression:e RPAREN statement:s
+		WHILE LPAREN expression:e RPAREN statement:s {: RESULT = new WhileStat(e, s); :}
 	;
 
-// Type: 
+// Type: WhileStat :> AST
 while_statement_no_short_if ::=
-		WHILE LPAREN expression:e RPAREN statement_no_short_if:s
+		WHILE LPAREN expression:e RPAREN statement_no_short_if:s {: RESULT = new WhileStat(e, s); :}
 	;
 
-// Type:
+// Type: ForStat :> AST
 for_statement ::=
 		FOR:f LPAREN for_init_opt:i SEMICOLON expression_opt:e SEMICOLON
-		for_update_opt:u RPAREN statement:s
+		for_update_opt:u RPAREN statement:s {: RESULT = new ForStat(f, i, e, u, s); :}
 	;
 
-// Type: 
+// Type: ForStat :> AST
 for_statement_no_short_if ::=
 		FOR:f LPAREN for_init_opt:i SEMICOLON expression_opt:e SEMICOLON
-		for_update_opt:u RPAREN statement_no_short_if:s
+		for_update_opt:u RPAREN statement_no_short_if:s {: RESULT = new ForStat(f, i, e, u, s); :}
 	;
 
-// Type: 
+// Type: Sequence<Statements> :> AST :> AST
 for_init_opt ::=
-		for_init:l 		
-	|       /* Empty */    		
+		for_init:l {: RESULT = new Sequence(l); :}
+	|       /* Empty */ {: RESULT = new Sequence(); :}
 	;
 
-// Type: 
+// Type: Sequence<Statements> :> AST :> AST
 for_init ::=	
-		statement_expression_list:l  
-	|	local_variable_declaration:l 
+		statement_expression_list:l {: RESULT = new Sequence(l); :}
+	|	local_variable_declaration:l {: RESULT = new Sequence(l); :}
 	;
 
-// Type: 
+// Type: Sequence<Expressions> :> AST :> AST
 for_update_opt ::=
-		for_update:l 		
-	|       /* Empty */		
+		for_update:l {: RESULT = new Sequence(l); :} 		
+	|       /* Empty */ {: RESULT = new Sequence(); :}
 	;
 
-// Type: 
+// Type: Sequence<Expressions> :> AST :> AST
 for_update ::=	
-		statement_expression_list:l 
+		statement_expression_list:l {: RESULT = new Sequence(l); :}
 	;
 
-// Type: 
+// Type: Sequence<Statement> :> AST :> AST
 statement_expression_list ::=
-		statement_expression:e 	
-	|	statement_expression_list:es COMMA statement_expression:e
+		statement_expression:e 	{: RESULT = new Sequence(e); :}
+	|	statement_expression_list:es COMMA statement_expression:e {: RESULT = es.append(e); :}
 	;
 
-// Type: 
+// Type: BreakStat :> AST
 break_statement ::=
-		BREAK:b SEMICOLON
+		BREAK:b SEMICOLON {: RESULT = new BreakStat(b); :}
 	;
 
-// Type: 
+// Type: ContinueStat :> AST
 continue_statement ::=
-		CONTINUE:c SEMICOLON
+		CONTINUE:c SEMICOLON {: RESULT = new ContinueStat(c); :}
 	;
 
-// Type:
+// Type: ReturnStat :> AST
 return_statement ::=
-		RETURN:r expression_opt:e SEMICOLON
+		RETURN:r expression_opt:e SEMICOLON {: RESULT = new ReturnStat(r, e); :}
 	;
 
 // -----------------------------------------------------------------------------
