@@ -227,12 +227,12 @@ non terminal Sequence formal_parameter_list_opt, formal_parameter_list;
 non terminal ParamDecl formal_parameter;
 
 // 19.8.4) Static Initializers
-non terminal AST static_initializer;   
+non terminal StaticInitDecl static_initializer;   
 
 // 19.8.5) Constructor Declarations
-non terminal AST constructor_declaration;
+non terminal ConstructorDecl constructor_declaration;
 non terminal AST constructor_body;
-non terminal AST explicit_constructor_invocation;
+non terminal Sequence explicit_constructor_invocation;
 
 // 19.9) Interfaces
 // 19.9.1) Interface Declarations
@@ -589,7 +589,7 @@ variable_declarators ::=
 
 // Type: VarDecl :> AST
 variable_declarator ::=
-		variable_declarator_id:n	{: RESULT = n :}				
+		variable_declarator_id:n	{: RESULT = n; :}				
 	|	variable_declarator_id:n EQ variable_initializer:i {: RESULT = n,i; :}  ///////////////
 	;
 
@@ -617,7 +617,7 @@ method_declaration ::=
 		method_body:b    {: RESULT = new MethodDecl(m, r, n, p, b); :}
 	|	modifiers_opt:m  VOID:v	 name:n 
 		LPAREN  formal_parameter_list_opt:p  RPAREN
-		method_body:b    {: RESULT = new MethodDecl(m, v, n, p, b) :}
+		method_body:b    {: RESULT = new MethodDecl(m, v, n, p, b); :}
 	;
 
 // Type: Sequence(Block :> Statement) :> AST
@@ -664,19 +664,19 @@ formal_parameter ::=
 // 19.8.4) Static Initializers
 // -----------------------------------------------------------------------------
 
-// Type: Sequence(Block :> Statement :> AST) :> AST
+// Type: StaticInitDecl :> ClassBodyDecl :> AST
 static_initializer ::= 
-		STATIC block:b		{: RESULT = new Sequence(b); :}////////////
+		STATIC block:b		{: RESULT = new StaticInitDecl(b); :}
 	;
 
 // -----------------------------------------------------------------------------
 // 19.8.5) Constructor Declarations
 // -----------------------------------------------------------------------------
 
-// Type: 
+// Type: ConstructorDecl :> ClassBodyDecl :> AST
 constructor_declaration ::=
 		modifiers_opt:m name:n LPAREN formal_parameter_list_opt:p RPAREN 
-		constructor_body:b 
+		constructor_body:b {: RESULT = new ConstructorDecl(m, n, p, b); :}
 	;
 
 // Type: 
@@ -684,13 +684,13 @@ constructor_body ::=
 		LBRACE explicit_constructor_invocation:e block_statements:b RBRACE
 	|	LBRACE explicit_constructor_invocation:e RBRACE
 	|	LBRACE block_statements:b RBRACE
-	|       LBRACE RBRACE
+	|   LBRACE RBRACE
 	;
 
-// Type: 
+// Type: Sequence(CInvocation :> Expression) :> AST
 explicit_constructor_invocation ::=
-		SUPER:s LPAREN argument_list_opt:a RPAREN SEMICOLON
-	|	THIS:t LPAREN argument_list_opt:a RPAREN SEMICOLON
+		SUPER:s LPAREN argument_list_opt:a RPAREN SEMICOLON {: RESULT = a; :}
+	|	THIS:t LPAREN argument_list_opt:a RPAREN SEMICOLON {: RESULT = a; :}     ////////////////
 	;
 
 // -----------------------------------------------------------------------------
@@ -701,10 +701,10 @@ explicit_constructor_invocation ::=
 // 19.9.1) Interface Declarations
 // -----------------------------------------------------------------------------
 
-// Type: 
+// Type: ClassDecl :> AST
 interface_declaration ::=
 		modifiers_opt:m INTERFACE name:n 
-		extends_interfaces_opt:e interface_body:i
+		extends_interfaces_opt:e interface_body:i {: RESULT = new ClassDecl(m, n, i, e); :} ////////////
 	;
 
 // Type:
@@ -1101,7 +1101,7 @@ field_access ::=
 // Type: 
 method_invocation ::=
 		name:n LPAREN argument_list_opt:a RPAREN
-        |	primary:t DOT name:f LPAREN argument_list_opt:a RPAREN
+    |	primary:t DOT name:f LPAREN argument_list_opt:a RPAREN
 	|	SUPER:s DOT name:f LPAREN argument_list_opt:a RPAREN 
 	|	name:t DOT name:f LPAREN argument_list_opt:a RPAREN 
 	;
