@@ -178,7 +178,7 @@ terminal Token LBRACK, RBRACK;  // [ ]
 non terminal Compilation goal;
 
 // 19.3) Lexical Structure
-non terminal AST literal;
+non terminal Literal literal;
 
 // 19.4) Types, Values, and Variables
 non terminal AST type;
@@ -261,7 +261,7 @@ non terminal AST if_then_statement;
 non terminal AST if_then_else_statement, if_then_else_statement_no_short_if;
 non terminal AST do_statement;
 non terminal AST switch_statement;
-non terminal AST  switch_block;
+non terminal AST switch_block;
 non terminal AST switch_block_statement_groups_opt;
 non terminal AST switch_block_statement_groups;
 non terminal AST switch_block_statement_group;
@@ -337,14 +337,14 @@ goal ::=	compilation_unit:c {: RESULT = c; :}
 
 // Type: Literal :> Expression :> AST
 literal ::=	
-		INTEGER_LITERAL:l        {: RESULT = new Literal(l, Literal.IntKind);     :}
-	|       LONG_LITERAL:l           {: RESULT = new Literal(l, Literal.LongKind);    :}
-	|       FLOAT_LITERAL:l          {: RESULT = new Literal(l, Literal.FloatKind);   :}
-	|       DOUBLE_LITERAL:l         {: RESULT = new Literal(l, Literal.DoubleKind);  :}
+        INTEGER_LITERAL:l        {: RESULT = new Literal(l, Literal.IntKind);     :}
+	|   LONG_LITERAL:l           {: RESULT = new Literal(l, Literal.LongKind);    :}
+	|   FLOAT_LITERAL:l          {: RESULT = new Literal(l, Literal.FloatKind);   :}
+	|   DOUBLE_LITERAL:l         {: RESULT = new Literal(l, Literal.DoubleKind);  :}
 	|	BOOLEAN_LITERAL:l        {: RESULT = new Literal(l, Literal.BooleanKind); :}
-	|	STRING_LITERAL:l	 {: RESULT = new Literal(l, Literal.StringKind);  :}
+	|	STRING_LITERAL:l	     {: RESULT = new Literal(l, Literal.StringKind);  :}
 	|	NULL_LITERAL:l           {: RESULT = new Literal(l, Literal.NullKind);    :}
-	|       CHARACTER_LITERAL:l      {: RESULT = new Literal(l, Literal.CharKind);    :}
+	|   CHARACTER_LITERAL:l      {: RESULT = new Literal(l, Literal.CharKind);    :}
 	;
 
 // -----------------------------------------------------------------------------
