@@ -200,31 +200,31 @@ non terminal Sequence type_declarations_opt, type_declarations;
 non terminal ClassDecl type_declaration;
  
 // 19.7) Productions used only in the LALR(1) grammar
-non terminal AST modifiers_opt, modifiers; 
-non terminal AST modifier;
+non terminal Sequence modifiers_opt, modifiers; 
+non terminal Modifier modifier;
 
 // 19.8) Classes
 // 19.8.1) Class Declaration
-non terminal AST class_declaration;
-non terminal AST super_opt, super; 
-non terminal AST interfaces_opt, interfaces, interface_type_list;
-non terminal AST class_body;
-non terminal AST class_body_declarations, class_body_declarations_opt;
-non terminal AST class_body_declaration;
+non terminal ClassDecl class_declaration;
+non terminal ClassType super_opt, super; 
+non terminal Sequence interfaces_opt, interfaces, interface_type_list;
+non terminal Sequence class_body;
+non terminal Sequence class_body_declarations, class_body_declarations_opt;
+non terminal Sequence class_body_declaration;
 
 // 19.8.2) Field Declarations
-non terminal AST field_declaration;
-non terminal AST variable_declarators;
-non terminal AST variable_declarator;
-non terminal AST variable_declarator_id;
-non terminal AST variable_initializers_opt;
-non terminal AST variable_initializer;
+non terminal Sequence field_declaration;
+non terminal Sequence variable_declarators;
+non terminal VarDecl variable_declarator;
+non terminal Name variable_declarator_id;
+non terminal Expression variable_initializers_opt;
+non terminal Expression variable_initializer;
 
 // 19.8.3) Method Declarations
-non terminal AST method_declaration;
-non terminal AST method_body;
-non terminal AST formal_parameter_list_opt, formal_parameter_list;
-non terminal AST formal_parameter;
+non terminal MethodDecl method_declaration;
+non terminal Sequence method_body;
+non terminal Sequence formal_parameter_list_opt, formal_parameter_list;
+non terminal ParamDecl formal_parameter;
 
 // 19.8.4) Static Initializers
 non terminal AST static_initializer;   
@@ -454,25 +454,25 @@ type_declaration ::=
 // 19.7) Productions used only in the LALR(1) grammar
 // -----------------------------------------------------------------------------
 
-// Type: Sequence(Modifier) :> AST
+// Type: Sequence(Modifier :> AST) :> AST
 modifiers_opt ::=
-		modifiers:m             {: RESULT = m; :}
-	|       /* Empty */             {: RESULT = new Sequence(new Modifier(Modifier.Public)); :}
+		modifiers:m                     {: RESULT = m; :}
+	|       /* Empty */                 {: RESULT = new Sequence(new Modifier(Modifier.Public)); :}
 	;
 
-// Type: Sequence(Modifier) :> AST
+// Type: Sequence(Modifier :> AST) :> AST
 modifiers ::=
-		modifier:m              {: RESULT = new Sequence(m); :}
-	|	modifiers:ms modifier:m {: RESULT = ms.append(m); :}
+		modifier:m                      {: RESULT = new Sequence(m); :}
+	|	modifiers:ms modifier:m         {: RESULT = ms.append(m); :}
 	;
 
 // Type: Modifier :> AST
 modifier ::=
-		PUBLIC:m {: RESULT = new Modifier(m, Modifier.Public); :}
-	|	PRIVATE:m {: RESULT = new Modifier(m, Modifier.Private); :}
-	|	STATIC:m {: RESULT = new Modifier(m, Modifier.Static); :}
-	|	FINAL:m {: RESULT = new Modifier(m, Modifier.Final); :}
-	|	ABSTRACT:m {: RESULT = new Modifier(m, Modifier.Abstract); :} 
+		PUBLIC:m     {: RESULT = new Modifier(m, Modifier.Public); :}
+	|	PRIVATE:m    {: RESULT = new Modifier(m, Modifier.Private); :}
+	|	STATIC:m     {: RESULT = new Modifier(m, Modifier.Static); :}
+	|	FINAL:m      {: RESULT = new Modifier(m, Modifier.Final); :}
+	|	ABSTRACT:m   {: RESULT = new Modifier(m, Modifier.Abstract); :} 
 	;
 
 // -----------------------------------------------------------------------------
@@ -492,18 +492,18 @@ class_declaration ::=
 
 // Type: ClassType :> Type :> AST
 super_opt ::=
-		super:s			{: RESULT = s; :}
+		super:s			                {: RESULT = s; :}
 	|       /* Empty */		
 	;
 
 // Type: ClassType :> Type :> AST
-super ::= EXTENDS class_type:c		{: RESULT = c; :}
+super ::= EXTENDS class_type:c		    {: RESULT = c; :}
 	;
 
 // Type: Sequence(ClassType) :> AST
 interfaces_opt ::=
-		interfaces:i		{: RESULT = i; :}		
-	|	/* Empty */		{: RESULT = new Sequence(); :}
+		interfaces:i		            {: RESULT = i; :}		
+	|	/* Empty */		                {: RESULT = new Sequence(); :}
 	;
 
 
@@ -527,8 +527,8 @@ class_body ::=
 
 // Type: Sequence(ClassBodyDecl) :> AST
 class_body_declarations_opt ::=
-		class_body_declarations:l  {: RESULT = l; :} 
-	|	/* Empty */                {: RESULT = new Sequence(); :}
+		class_body_declarations:l        {: RESULT = l; :} 
+	|	/* Empty */                      {: RESULT = new Sequence(); :}
 	;
 
 // Type: Sequence(ClassBodyDecl) :> AST
@@ -542,7 +542,7 @@ class_body_declarations ::=
 class_body_declaration ::=
 		field_declaration:l        {: RESULT = l; :}
 	|	method_declaration:l       {: RESULT = new Sequence(l); :}		
-	|       static_initializer:l       {: RESULT = new Sequence(l); :}
+	|   static_initializer:l       {: RESULT = new Sequence(l); :}
 	|	constructor_declaration:l  {: RESULT = new Sequence(l); :}
 	;
 
@@ -580,63 +580,63 @@ field_declaration ::=
 			:}
 	;
 
-// Type:
+// Type: Sequence(VarDecl) :> AST
 variable_declarators ::=
-		variable_declarator:v 	
-	|	variable_declarators:vs COMMA variable_declarator:v
+		variable_declarator:v 	{: RESULT = v; :}
+	|	variable_declarators:vs COMMA variable_declarator:v {: RESULT = s.append(v); :}
 					
 	;
 
-// Type: 
+// Type: VarDecl :> AST
 variable_declarator ::=
-		variable_declarator_id:n					
-	|	variable_declarator_id:n EQ variable_initializer:i
+		variable_declarator_id:n	{: RESULT = n :}				
+	|	variable_declarator_id:n EQ variable_initializer:i {: RESULT = n,i; :}  ///////////////
 	;
 
 
-// Type: 
+// Type: Name :> AST
 variable_declarator_id ::=
-		name:n			
-	|	variable_declarator_id:v LBRACK RBRACK
+		name:n			{: RESULT = new Name(n); :}
+	|	variable_declarator_id:v LBRACK RBRACK {: RESULT = new Name(v); :}
 	;
 
-// Type: 
+// Type: Expression :> AST
 variable_initializer ::=
-		expression:l 		
-	|	array_initializer:a	
+		expression:l 		{: RESULT = l; :}
+	|	array_initializer:a	{: RESULT = a; :}
 	;
 
 // -----------------------------------------------------------------------------
 // 19.8.3) Method Declarations
 // -----------------------------------------------------------------------------
 
-// Type: 
+// Type: MethodDecl :> ClassBodyDecl :> AST
 method_declaration ::=
 		modifiers_opt:m  type:r  name:n 
 		LPAREN  formal_parameter_list_opt:p  RPAREN
-		method_body:b    
+		method_body:b    {: RESULT = new MethodDecl(m, r, n, p, b); :}
 	|	modifiers_opt:m  VOID:v	 name:n 
 		LPAREN  formal_parameter_list_opt:p  RPAREN
-		method_body:b    
+		method_body:b    {: RESULT = new MethodDecl(m, v, n, p, b) :}
 	;
 
-// Type: 
+// Type: Sequence(Block :> Statement) :> AST
 method_body ::=
-		block:b		
-	|	SEMICOLON	
+		block:b		{: RESULT = b; :} //////////////////
+	|	SEMICOLON	{: RESULT = new Sequence(); :}
 	;
 
 
-// Type: 
+// Type: Sequence(ParamDecl :> AST) :> AST
 formal_parameter_list_opt ::=
-		formal_parameter_list:l 
-	|	/* Empty */		
+		formal_parameter_list:l {: RESULT = l; :}
+	|	/* Empty */		{: RESULT = new Sequence(); :}
 	;
 
-// Type:
+// Type: Sequence(ParamDecl :> AST) :> AST
 formal_parameter_list ::=
-		formal_parameter:l	
-	|	formal_parameter_list:ls COMMA formal_parameter:l
+		formal_parameter:l	{: RESULT = new Sequence(l); :}
+	|	formal_parameter_list:ls COMMA formal_parameter:l {: RESULT = ls.append(l); :}
 	;
 
 // Type: ParamDecl :> AST
@@ -664,9 +664,9 @@ formal_parameter ::=
 // 19.8.4) Static Initializers
 // -----------------------------------------------------------------------------
 
-// Type: 
+// Type: Sequence(Block :> Statement :> AST) :> AST
 static_initializer ::= 
-		STATIC block:b		
+		STATIC block:b		{: RESULT = new Sequence(b); :}////////////
 	;
 
 // -----------------------------------------------------------------------------
