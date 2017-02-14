@@ -181,23 +181,23 @@ non terminal Compilation goal;
 non terminal Literal literal;
 
 // 19.4) Types, Values, and Variables
-non terminal AST type;
-non terminal AST primitive_type;
-non terminal AST reference_type;
-non terminal AST class_or_interface_type;
-non terminal AST class_type;
-non terminal AST interface_type;
-non terminal AST array_type;
+non terminal Type type;
+non terminal PrimitiveType primitive_type;
+non terminal Type reference_type;
+non terminal ClassType class_or_interface_type;
+non terminal ClassType class_type;
+non terminal ClassType interface_type;
+non terminal ArrayType array_type;
 
 // 19.5) Names
 non terminal Name name; 
 
 // 19.6) Packages
-non terminal AST compilation_unit;
-non terminal AST import_declarations_opt, import_declarations;
-non terminal AST import_declaration;
-non terminal AST type_declarations_opt, type_declarations;
-non terminal AST type_declaration;
+non terminal Compilation compilation_unit;
+non terminal Sequence import_declarations_opt, import_declarations;
+non terminal Name import_declaration;
+non terminal Sequence type_declarations_opt, type_declarations;
+non terminal ClassDecl type_declaration;
  
 // 19.7) Productions used only in the LALR(1) grammar
 non terminal AST modifiers_opt, modifiers; 
@@ -359,41 +359,41 @@ type	::=	primitive_type:l 	 {: RESULT = l; :}
 // Type: PrimitiveType :> Type :> AST
 primitive_type ::=
 		BOOLEAN:l {: RESULT = new PrimitiveType(l, PrimitiveType.BooleanKind); :}
-	|       BYTE:l	  {: RESULT = new PrimitiveType(l, PrimitiveType.ByteKind);  :}
-	|       SHORT:l   {: RESULT = new PrimitiveType(l, PrimitiveType.ShortKind);  :}
-	|	INT:l     {: RESULT = new PrimitiveType(l, PrimitiveType.IntKind);     :}
-	|       LONG:l    {: RESULT = new PrimitiveType(l, PrimitiveType.LongKind);     :}
-	|       FLOAT:l   {: RESULT = new PrimitiveType(l, PrimitiveType.FloatKind);   :}
-	|	DOUBLE:l  {: RESULT = new PrimitiveType(l, PrimitiveType.DoubleKind);  :}
-	|       CHAR:l    {: RESULT = new PrimitiveType(l, PrimitiveType.CharKind);  :}
-	|       STRING:l  {: RESULT = new PrimitiveType(l, PrimitiveType.StringKind);  :}
+	|   BYTE:l	  {: RESULT = new PrimitiveType(l, PrimitiveType.ByteKind); :}
+	|   SHORT:l   {: RESULT = new PrimitiveType(l, PrimitiveType.ShortKind); :}
+	|	INT:l     {: RESULT = new PrimitiveType(l, PrimitiveType.IntKind); :}
+	|   LONG:l    {: RESULT = new PrimitiveType(l, PrimitiveType.LongKind); :}
+	|   FLOAT:l   {: RESULT = new PrimitiveType(l, PrimitiveType.FloatKind); :}
+	|	DOUBLE:l  {: RESULT = new PrimitiveType(l, PrimitiveType.DoubleKind); :}
+	|   CHAR:l    {: RESULT = new PrimitiveType(l, PrimitiveType.CharKind); :}
+	|   STRING:l  {: RESULT = new PrimitiveType(l, PrimitiveType.StringKind); :}
 	;
 
 // Type: Type :> AST
 reference_type ::=
-		class_or_interface_type:c	{: RESULT = c; :}
-	|	array_type:c			{: RESULT = c; :}
+		class_or_interface_type:c     {: RESULT = c; :}
+	|	array_type:c			      {: RESULT = c; :}
 	;
 
 // Type: ClassType :> Type :> AST
 class_or_interface_type ::=
-		name:n	               		{: RESULT = new ClassType(n); :}
+		name:n                        {: RESULT = new ClassType(n); :}
 	;	
 
 // Type: ClassType :> AST
 class_type ::= 
-		class_or_interface_type:c     	{: RESULT = c; :}
+		class_or_interface_type:c     {: RESULT = c; :}
 	;
 
 // Type: ClassType :> AST
 interface_type ::=
-		class_or_interface_type:c     	{: RESULT = c; :}
+		class_or_interface_type:c     {: RESULT = c; :}
 	;
 
 // Type: ArrayType :> Type :> AST
 array_type ::= 
-	        primitive_type:t dims:d	        {: RESULT = new ArrayType(t, d.nchildren); :}
-	|	name:n dims:d	 		{: RESULT = new ArrayType(new ClassType(n), d.nchildren); :}
+        primitive_type:t dims:d       {: RESULT = new ArrayType(t, d.nchildren); :}
+	|	name:n dims:d	 		      {: RESULT = new ArrayType(new ClassType(n), d.nchildren); :}
 	;
 
 // -----------------------------------------------------------------------------
@@ -401,7 +401,7 @@ array_type ::=
 // -----------------------------------------------------------------------------
 
 // Type: Name :> AST
-name	::=	IDENTIFIER:i   {: RESULT = new Name(i); :}
+name	::=	IDENTIFIER:i              {: RESULT = new Name(i); :}
 	;
 
 // -----------------------------------------------------------------------------
@@ -411,10 +411,10 @@ name	::=	IDENTIFIER:i   {: RESULT = new Name(i); :}
 // Type: Compilation :> AST
 compilation_unit ::=
 		import_declarations_opt:i // this should not have any actions on it
-		type_declarations_opt:t   {: RESULT = new Compilation(t.merge(i)); :}
+		type_declarations_opt:t       {: RESULT = new Compilation(t.merge(i)); :}
 	;
 
-// Type:  Sequence(ClassDecl :> AST) :> AST
+// Type: Sequence(ClassDecl :> AST) :> AST
 import_declarations_opt ::= 
 		import_declarations:is        {: RESULT = is; :} 
    	|       /* Empty */ 		      {: RESULT = new Sequence(); :}
@@ -422,31 +422,31 @@ import_declarations_opt ::=
 
 // Type: Sequence(ClassDecl :> AST) :> AST
 import_declarations ::= 
-		import_declaration:i		{: RESULT = parser.getImportFile(i.getname()); :}
+		import_declaration:i          {: RESULT = parser.getImportFile(i.getname()); :}
 	|	import_declarations:is import_declaration:i {: RESULT = is.merge(parser.getImportFile(i.getname())); :}
 	;
 
 // Type: Name :> AST
 import_declaration ::=
-		IMPORT name:n SEMICOLON   {:  RESULT = n; :}
+		IMPORT name:n SEMICOLON       {: RESULT = n; :}
         ;
 
-// Type: 
+// Type: Sequence(Type :> AST) :> AST
 type_declarations_opt ::= 
-		type_declarations:e 	
-	|	/* Empty */          	
+		type_declarations:e           {: RESULT = new Sequence(e); :}	///////need to check
+	|	/* Empty */                   {: RESULT = new Sequence(); :}
 	;
 
-// Type: 
+// Type: Sequence(Type :> AST) :> AST
 type_declarations ::=
-		type_declaration:t  	
-	|	type_declarations:ts type_declaration:t 
+		type_declaration:t  	       {: RESULT = new Sequence(t); :}   ///////////////////
+	|	type_declarations:ts type_declaration:t {: RESULT = ts.append(t); :}
 	;
 
-// Type: 
+// Type: ClassDecl :> AST
 type_declaration ::=
-		class_declaration:c    	
-	|	interface_declaration:c 
+		class_declaration:c             {: RESULT = c; :} 	/////////////////
+	|	interface_declaration:c         {: RESULT = c; :}
 	;
 
 
