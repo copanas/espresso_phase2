@@ -240,12 +240,12 @@ non terminal AST interface_declaration;
 non terminal AST extends_interfaces, extends_interfaces_opt, interface_body;
 non terminal AST interface_member_declarations_opt;
 non terminal AST interface_member_declarations, interface_member_declaration;
-non terminal AST constant_declaration;
+non terminal Sequence constant_declaration;
 non terminal AST abstract_method_declaration;
 
 // 19.10) Arrays
-non terminal AST array_initializer;
-non terminal AST variable_initializers;
+non terminal Var array_initializer;
+non terminal Sequence variable_initializers;
 
 // 19.11) Blocks and Statements
 non terminal AST block;
@@ -704,24 +704,24 @@ explicit_constructor_invocation ::=
 // Type: ClassDecl :> AST
 interface_declaration ::=
 		modifiers_opt:m INTERFACE name:n 
-		extends_interfaces_opt:e interface_body:i {: RESULT = new ClassDecl(m, n, i, e); :} ////////////
+		extends_interfaces_opt:e interface_body:i {: RESULT = new ClassDecl(m, n, i, e); :}   //////////////////////
 	;
 
-// Type:
+// Type: Sequence(ClassDecl :> AST) :> AST
 extends_interfaces_opt ::=
-		extends_interfaces:ei		
-	|	/* Empty */			
+		extends_interfaces:ei		{: RESULT = ei; :}
+	|	/* Empty */			{: RESULT = new Sequence(); :}
 	;
 
-// Type: 
+// Type: Sequence(ClassDecl :> AST) :> AST
 extends_interfaces ::=
-		EXTENDS interface_type:it	
-	|	extends_interfaces:ei COMMA interface_type:it
+		EXTENDS interface_type:it	{: RESULT = new Sequence(it); :}
+	|	extends_interfaces:ei COMMA interface_type:it {: RESULT = ei.append(it); :}
 	;
 
-// Type: 
+// Type: Sequence() :> AST
 interface_body ::=
-		LBRACE interface_member_declarations_opt:io RBRACE
+		LBRACE interface_member_declarations_opt:io RBRACE {: RESULT = io; :}
 	;
 	
 // Type: 
@@ -774,22 +774,22 @@ abstract_method_declaration ::=
 // 19.10) Arrays
 // -----------------------------------------------------------------------------
 
-// Type:
+// Type: Var :> AST
 array_initializer ::=
-		LBRACE variable_initializers_opt:v RBRACE 
+		LBRACE variable_initializers_opt:v RBRACE {: RESULT = new Var(v); :}
 	;
 
-// Type:
+// Type: Sequence(Var :> AST) :> AST
 variable_initializers_opt ::=
-	        variable_initializers:v		
-	|	/* Epsilon */			
+        variable_initializers:v {: RESULT = v; :}   /////////////		
+	|	/* Epsilon */    {: RESULT = new Sequence(); :}			
 	;
 
 	
-// Type: 
+// Type: Sequence(Var :> AST) :> AST
 variable_initializers ::=
-		variable_initializer:v		
-	|	variable_initializers:vs COMMA variable_initializer:v
+		variable_initializer:v	{: RESULT = v; :}	
+	|	variable_initializers:vs COMMA variable_initializer:v {: RESULT = vs.append(v); :}
 	;
 
 // -----------------------------------------------------------------------------
@@ -1239,15 +1239,15 @@ conditional_or_expression ::=
 	|	conditional_or_expression:e1 OROR:o conditional_and_expression:e2
 	;
 
-// Type:
+// Type: Expression :> AST
 conditional_expression ::=
-		conditional_or_expression:l 
+		conditional_or_expression:l
 	|	conditional_or_expression:t QUEST expression:tb COLON conditional_expression:fb
 	;
 
-// Type:
+// Type: Expression :> AST
 assignment_expression ::=
-		conditional_expression:l 
+		conditional_expression:l
 	|	assignment:l             
 	;
 
@@ -1281,18 +1281,18 @@ left_hand_side ::=
 	
 // Type:
 expression_opt ::=
-		expression:l 
+		expression:l
 	|       /* Empty */ 
 	;
 
-// Type:
+// Type: Expression :> AST
 expression ::=	
-		assignment_expression:l 
+		assignment_expression:l {: RESULT = l; :}
 	;
 
-// Type:
+// Type: Expression :> AST
 constant_expression ::=
-		expression:l		
+		expression:l		{: RESULT = l; :}
 	;
 
 // -----------------------------------------------------------------------------
