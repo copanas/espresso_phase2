@@ -1117,12 +1117,12 @@ postfix_expression ::=
 		primary:l 		    
  	|	post_increment_expression:l 
 	|	post_decrement_expression:l 
-	|       name:n                      
+	|   name:n                      
 	;
 
-// Type: 
+// Type: PostOp :> AST
 post_increment_expression ::=
-		postfix_expression:e PLUSPLUS:o 
+		postfix_expression:e PLUSPLUS:o {: RESULT = new PostOp(e, o); :}
 	;
 
 // Type:
@@ -1272,11 +1272,11 @@ assignment_operator ::=
         |       OREQ:o      
         ;       
 
-// Type:
+// Type: Name :> ASt
 left_hand_side ::=
-		name:n         
-	|	field_access:l 
-	|	array_access:a 
+		name:n      {: RESULT = n; :}   
+	|	field_access:l {: RESULT = new Name(l); :}
+	|	array_access:a {: RESULT = new Name(a); :}
 	;
 	
 // Type:
