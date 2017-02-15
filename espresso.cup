@@ -1239,37 +1239,37 @@ conditional_or_expression ::=
 	|	conditional_or_expression:e1 OROR:o conditional_and_expression:e2
 	;
 
-// Type: Expression :> AST
+// Type: Expression :> AST/////////////////////////////////////////////////////////////////////
 conditional_expression ::=
-		conditional_or_expression:l
-	|	conditional_or_expression:t QUEST expression:tb COLON conditional_expression:fb
-	;
+                conditional_or_expression:l 
+        |       conditional_or_expression:t QUEST expression:tb COLON conditional_expression:fb
+        ;
 
-// Type: Expression :> AST
+// Type:  Expression :> AST
 assignment_expression ::=
-		conditional_expression:l
-	|	assignment:l             
-	;
+                conditional_expression:l {:RESULT = l; :}
+        |       assignment:l {:RESULT = l; :}            
+        ;
 
-// Type:
-assignment ::=	
-	left_hand_side:e1 assignment_operator:o assignment_expression:e2
-	;
+// Type: Assignment :> Expression :> AST
+assignment ::=
+        left_hand_side:e1 assignment_operator:o assignment_expression:e2 {:RESULT = new Assignment(e1, e2, o);:}
+        ;
 
-// Type:
+// Type: AssignmentOp :> AST
 assignment_operator ::=
-                EQ:o        
-        |       MULTEQ:o    
-        |       DIVEQ:o     
-        |       MODEQ:o     
-        |       PLUSEQ:o    
-        |       MINUSEQ:o   
-        |       LSHIFTEQ:o  
-        |       RSHIFTEQ:o  
-        |       RRSHIFTEQ:o 
-        |       ANDEQ:o     
-        |       XOREQ:o     
-        |       OREQ:o      
+                EQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.EQ);:}     
+        |       MULTEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.MULTEQ);:}  
+        |       DIVEQ:o   {:RESULT = new AssignmentOp(o, AssignmentOp.DIVEQ);:}   
+        |       MODEQ:o   {:RESULT = new AssignmentOp(o, AssignmentOp.MODEQ);:}   
+        |       PLUSEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.PLUSEQ);:}   
+        |       MINUSEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.MINUSEQ);:}  
+        |       LSHIFTEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.LSHIFTEQ);:} 
+        |       RSHIFTEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.RSHIFTEQ);:} 
+        |       RRSHIFTEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.RRSHIFTEQ);:} 
+        |       ANDEQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.ANDEQ);:}    
+        |       XOREQ:o  {:RESULT = new AssignmentOp(o, AssignmentOp.XOREQ);:}    
+        |       OREQ:o   {:RESULT = new AssignmentOp(o, AssignmentOp.OREQ);:}    
         ;       
 
 // Type: Name :> ASt
