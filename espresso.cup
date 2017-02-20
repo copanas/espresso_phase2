@@ -676,15 +676,15 @@ static_initializer ::=
 // Type: ConstructorDecl :> ClassBodyDecl :> AST
 constructor_declaration ::=
 		modifiers_opt:m name:n LPAREN formal_parameter_list_opt:p RPAREN 
-		constructor_body:b {: RESULT = new ConstructorDecl(m, n, p, b); :}
+		constructor_body:b {: RESULT = new ConstructorDecl(m, n, p, b.ci, b.st); :}
 	;
 
 // Type: 
 constructor_body ::=
-		LBRACE explicit_constructor_invocation:e block_statements:b RBRACE
-	|	LBRACE explicit_constructor_invocation:e RBRACE
-	|	LBRACE block_statements:b RBRACE
-	|   LBRACE RBRACE
+		LBRACE explicit_constructor_invocation:e block_statements:b RBRACE {: RESULT = new ConstructorBody(e, b); :}
+	|	LBRACE explicit_constructor_invocation:e RBRACE  {: RESULT = new ConstructorBody(e, new Sequence()); :}
+	|	LBRACE block_statements:b RBRACE  {: RESULT = new ConstructorBody(null, b); :}
+	|   LBRACE RBRACE  {: RESULT = new ConstructorBody(null, new Sequence()); :}
 	;
 
 // Type: Sequence(CInvocation :> Expression) :> AST
@@ -1279,10 +1279,10 @@ left_hand_side ::=
 	|	array_access:a {: RESULT = new Name(a); :}
 	;
 	
-// Type:
+// Type: ///////////////////////////////////////////////////////////
 expression_opt ::=
-		expression:l
-	|       /* Empty */ 
+		expression:l {:RESULT = new Sequence(l);:}
+	|       /* Empty */  {:RESULT = new Sequence();:}
 	;
 
 // Type: Expression :> AST
