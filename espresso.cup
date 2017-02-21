@@ -813,10 +813,10 @@ block_statements ::=
 	|	block_statements:ls block_statement:l {: RESULT = ls.append(l); :}
 	;
 
-// Type: Statement :> AST
+// Type: LocalDecl (implements VarDecl) :> Statement :> AST
 block_statement ::=
-		local_variable_declaration:l SEMICOLON {: RESULT = l; :}  /////////NOT SURE ABOUT THIS ONE
-	|	statement:l {: RESULT = new Statement(l); :}                      
+		local_variable_declaration:l SEMICOLON {: RESULT = new LocalDecl(l); :}
+	|	statement:l {: RESULT = new Statement(l); :}  //????????????????????????                    
 	;
 
 // Type: Sequence(LocalDecl) :> AST
@@ -845,10 +845,10 @@ local_variable_declaration ::=
                        :}
 	;
 
-// Type:
+// Type: Statement :> AST
 statement ::=	
-		statement_without_trailing_substatement:l 
-	|	if_then_statement:l 			  
+		statement_without_trailing_substatement:l {: RESULT = new Statement(l); :}
+	|	if_then_statement:l 		  
 	|	if_then_else_statement:l 		  
 	|	while_statement:l 			  
 	|	for_statement:l 			  
@@ -874,14 +874,14 @@ statement_without_trailing_substatement ::=
 	|	return_statement:l 	
 	;
 
-// Type: 
+// Type: (Null)
 empty_statement ::=
 		SEMICOLON              
 	;
 
-// Type:
+// Type: ExprStat :> Statement :> AST
 expression_statement ::=
-		statement_expression:l SEMICOLON 
+		statement_expression:l SEMICOLON {: RESULT =  new ExprStat(l); :}
 	;
 
 // Type:
@@ -895,7 +895,7 @@ statement_expression ::=
 	|	class_instance_creation_expression:l 
 	;
 
-// Type: IfStat :> AST
+// Type: IfStat :> Statement :> AST
 if_then_statement ::=
 		IF LPAREN expression:e RPAREN statement:t {: RESULT = new IfStat(e,t); :}
 	;
