@@ -1035,8 +1035,8 @@ primary ::=
 
 // Type:
 primary_no_new_array ::=	
-		literal:l  			     
-	|	THIS:l 				     
+		literal:l  {: RESULT = l; :}			     
+	|	THIS:l 	  {: RESULT = l; :}			     
 	|	LPAREN expression:l RPAREN 	     
 	|	class_instance_creation_expression:l 
 	|	field_access:l 			     
@@ -1045,9 +1045,9 @@ primary_no_new_array ::=
 	;
 
 
-// Type:
+// Type: New :> Expression :> AST
 class_instance_creation_expression ::=
-		NEW class_type:t LPAREN argument_list_opt:a RPAREN
+		NEW class_type:t LPAREN argument_list_opt:a RPAREN  {: RESULT = new New(t, a); :}
 					
 	;
 
@@ -1063,12 +1063,12 @@ argument_list ::=
 	|	argument_list:ls COMMA expression:l
 	;
 
-// Type:
+// Type: NewArray :> Expression
 array_creation_expression ::=
-		NEW primitive_type:t dim_exprs:d1 dims_opt:d2
-	|	NEW class_or_interface_type:t dim_exprs:d1 dims_opt:d2
-	|	NEW primitive_type:t dims:d array_initializer:i
-	|	NEW class_or_interface_type:t dims:d array_initializer:i
+		NEW primitive_type:t dim_exprs:d1 dims_opt:d2 {: RESULT = new NewArray(t, d1, d2); :}
+	|	NEW class_or_interface_type:t dim_exprs:d1 dims_opt:d2  {: RESULT = new NewArray(t, d1, d2); :}
+	|	NEW primitive_type:t dims:d array_initializer:i  {: RESULT = new NewArray(t, d, i); :}
+	|	NEW class_or_interface_type:t dims:d array_initializer:i {: RESULT = new NewArray(t, d, i); :}
 	;
 
 // Type:
@@ -1091,33 +1091,33 @@ dims ::=	LBRACK RBRACK
      	|	dims:d LBRACK RBRACK	
 	;
 
-// Type: 
+// Type: FieldRef :> Expression :> AST
 field_access ::=
-		primary:e DOT name:n 	
-	|	SUPER:s DOT name:n      
-	|       name:e DOT name:n       
+		primary:e DOT name:n  {: RESULT = new FieldRef(e, n); :}
+	|	SUPER:s DOT name:n   {: RESULT = new FieldRef(s, n); :}   
+	|       name:e DOT name:n   {: RESULT = new FieldRef(e, n); :}    
 	;
 
 // Type: 
-method_invocation ::=
-		name:n LPAREN argument_list_opt:a RPAREN
-    |	primary:t DOT name:f LPAREN argument_list_opt:a RPAREN
-	|	SUPER:s DOT name:f LPAREN argument_list_opt:a RPAREN 
-	|	name:t DOT name:f LPAREN argument_list_opt:a RPAREN 
+method_invocation ::= Invocation :> Expression :> AST
+		name:n LPAREN argument_list_opt:a RPAREN  {: RESULT = new Invocation(n, a); :}
+    |	primary:t DOT name:f LPAREN argument_list_opt:a RPAREN  {: RESULT = new Invocation(t, f, a); :}
+	|	SUPER:s DOT name:f LPAREN argument_list_opt:a RPAREN {: RESULT = new Invocation(s, f, a); :}
+	|	name:t DOT name:f LPAREN argument_list_opt:a RPAREN  {: RESULT = new Invocation(t, f, a); :}
 	;
 
 // Type: 
-array_access ::=
-		name:n LBRACK expression:e RBRACK        
-	|	primary_no_new_array:p LBRACK expression:e RBRACK
+array_access ::= ArrayAccessExpr :> Expression :> AST
+		name:n LBRACK expression:e RBRACK  {: RESULT = new ArrayAccessExpr(n, e); :}     
+	|	primary_no_new_array:p LBRACK expression:e RBRACK  {: RESULT = new ArrayAccessExpr(p, e); :}
 	;
 
-// Type:
+// Type: UnaryPostExpr :> Expression :> AST  ???????????????????????????????????????????
 postfix_expression ::=
-		primary:l 		    
- 	|	post_increment_expression:l 
-	|	post_decrement_expression:l 
-	|   name:n                      
+		primary:l {: RESULT = l; :}		    
+ 	|	post_increment_expression:l {: RESULT = new UnaryPostExpr(l); :}
+	|	post_decrement_expression:l {: RESULT = new UnaryPostExpr(l); :}
+	|   name:n  {: RESULT = n; :}               
 	;
 
 // Type: PostOp :> AST
@@ -1125,36 +1125,36 @@ post_increment_expression ::=
 		postfix_expression:e PLUSPLUS:o {: RESULT = new PostOp(e, o); :}
 	;
 
-// Type:
+// Type: PostOp :> AST
 post_decrement_expression ::=
-		postfix_expression:e MINUSMINUS:o
+		postfix_expression:e MINUSMINUS:o {: RESULT = new PostOp(e, o); :}
 	;
 
-// Type:
+// Type: UnaryPreExpr :> Expression :> AST
 unary_expression ::=
-		pre_increment_expression:p
-	|	pre_decrement_expression:p
-	| 	PLUS:o unary_expression:e
-	|	MINUS:o unary_expression:e
-	|	unary_expression_not_plus_minus:l 
+		pre_increment_expression:p {: RESULT = p; :}
+	|	pre_decrement_expression:p {: RESULT = p; :}
+	| 	PLUS:o unary_expression:e  {: RESULT = new UnaryPreExpr(e, o); :}
+	|	MINUS:o unary_expression:e {: RESULT = new UnaryPreExpr(e, o); :}
+	|	unary_expression_not_plus_minus:l {: RESULT = l; :}
 	;
 
-// Type:
+// Type: PreOp :> AST
 pre_increment_expression ::=
-		PLUSPLUS:o unary_expression:e	
+		PLUSPLUS:o unary_expression:e  {: RESULT = new PreOp(e, o); :}
 	;
 
-// Type:
+// Type:  PreOp :> AST
 pre_decrement_expression ::=
-		MINUSMINUS:o unary_expression:e	
+		MINUSMINUS:o unary_expression:e	 {: RESULT = new PreOp(e, o); :}
 	;
 
-// Type:
+// Type: UnaryPreExpr :> Expression :> AST
 unary_expression_not_plus_minus ::=
-		postfix_expression:l 	
-	|	COMP:o unary_expression:e
-	|	NOT:o unary_expression:e
-	|	cast_expression:c
+		postfix_expression:l {: RESULT = l; :}
+	|	COMP:o unary_expression:e {: RESULT = new UnaryPreExpr(e, o); :}
+	|	NOT:o unary_expression:e  {: RESULT = new UnaryPreExpr(e, o); :}
+	|	cast_expression:c  {: RESULT = c; :}
 	;
 
 // Type: CastExpr :> Expression :> AST
@@ -1169,80 +1169,80 @@ cast_expression ::=
 
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 multiplicative_expression ::=
-		unary_expression:l 
-	|	multiplicative_expression:e1 MULT:o unary_expression:e2
-	|	multiplicative_expression:e1 DIV:o unary_expression:e2
-	|	multiplicative_expression:e1 MOD:o unary_expression:e2
+		unary_expression:l {: RESULT = l; :}
+	|	multiplicative_expression:e1 MULT:o unary_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	multiplicative_expression:e1 DIV:o unary_expression:e2  {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	multiplicative_expression:e1 MOD:o unary_expression:e2  {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type: 
+// Type: BinaryExpr :> AST
 additive_expression ::= 
-		multiplicative_expression:l 
-	|	additive_expression:e1 PLUS:o multiplicative_expression:e2
-	|	additive_expression:e1 MINUS:o multiplicative_expression:e2
+		multiplicative_expression:l {: RESULT = l; :}
+	|	additive_expression:e1 PLUS:o multiplicative_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	additive_expression:e1 MINUS:o multiplicative_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 shift_expression ::=
-		additive_expression:l 
-	|	shift_expression:e1 LSHIFT:o additive_expression:e2
-	|	shift_expression:e1 RSHIFT:o additive_expression:e2
-	|	shift_expression:e1 RRSHIFT:o additive_expression:e2
+		additive_expression:l {: RESULT = l; :}
+	|	shift_expression:e1 LSHIFT:o additive_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	shift_expression:e1 RSHIFT:o additive_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	shift_expression:e1 RRSHIFT:o additive_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 relational_expression ::=
-		shift_expression:l 
-	|	relational_expression:e1 LT:o shift_expression:e2
-	|	relational_expression:e1 GT:o shift_expression:e2
-	|	relational_expression:e1 LTEQ:o shift_expression:e2
-	|	relational_expression:e1 GTEQ:o shift_expression:e2
-	|     	relational_expression:e1 INSTANCEOF:o name:e2 
+		shift_expression:l {: RESULT = l; :}
+	|	relational_expression:e1 LT:o shift_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	relational_expression:e1 GT:o shift_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	relational_expression:e1 LTEQ:o shift_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	relational_expression:e1 GTEQ:o shift_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|     	relational_expression:e1 INSTANCEOF:o name:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 equality_expression ::=
-		relational_expression:l 
-	|	equality_expression:e1 EQEQ:o relational_expression:e2
-	|	equality_expression:e1 NOTEQ:o relational_expression:e2
+		relational_expression:l {: RESULT = l; :}
+	|	equality_expression:e1 EQEQ:o relational_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
+	|	equality_expression:e1 NOTEQ:o relational_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 and_expression ::=
-		equality_expression:l 
-	|	and_expression:e1 AND:o equality_expression:e2
+		equality_expression:l {: RESULT = l; :}
+	|	and_expression:e1 AND:o equality_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 exclusive_or_expression ::=
-		and_expression:l 
-	|	exclusive_or_expression:e1 XOR:o and_expression:e2
+		and_expression:l {: RESULT = l; :}
+	|	exclusive_or_expression:e1 XOR:o and_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type: 
+// Type: BinaryExpr :> AST
 inclusive_or_expression ::=
-		exclusive_or_expression:l 
-	|	inclusive_or_expression:e1 OR:o exclusive_or_expression:e2
+		exclusive_or_expression:l {: RESULT = l; :}
+	|	inclusive_or_expression:e1 OR:o exclusive_or_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 conditional_and_expression ::=
-		inclusive_or_expression:l 
-	|	conditional_and_expression:e1 ANDAND:o inclusive_or_expression:e2
+		inclusive_or_expression:l {: RESULT = l; :}
+	|	conditional_and_expression:e1 ANDAND:o inclusive_or_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type:
+// Type: BinaryExpr :> AST
 conditional_or_expression ::=
-		conditional_and_expression:l 
-	|	conditional_or_expression:e1 OROR:o conditional_and_expression:e2
+		conditional_and_expression:l {: RESULT = l; :}
+	|	conditional_or_expression:e1 OROR:o conditional_and_expression:e2 {: RESULT = new BinaryExpr(e1, e2, o); :}
 	;
 
-// Type: Expression :> AST/////////////////////////////////////////////////////////////////////
+// Type: Expression :> Ternary :> AST/////////////////////////////////////////////////////////////////////
 conditional_expression ::=
-                conditional_or_expression:l 
-        |       conditional_or_expression:t QUEST expression:tb COLON conditional_expression:fb
+                conditional_or_expression:l {: RESULT = l; :}
+        |       conditional_or_expression:t QUEST expression:tb COLON conditional_expression:fb {: RESULT = new Ternary(t, tb, fb); :}
         ;
 
 // Type:  Expression :> AST
